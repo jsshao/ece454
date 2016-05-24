@@ -1,0 +1,60 @@
+<project name="a1" default="compile" basedir=".">
+
+  <description>ECE454 A1 Starter Code</description>
+
+  <property name="src" location="src" />
+  <property name="gen" location="gen-java" />
+  <property name="build" location="build" />
+
+  <path id="libs.classpath">
+    <fileset dir="lib">
+      <include name="*.jar" />
+    </fileset>
+  </path>
+  <path id="build.classpath">
+    <path refid="libs.classpath" />
+    <pathelement path="${gen}" />
+  </path>
+  <path id="a1.classpath">
+    <path refid="build.classpath" />
+    <pathelement path="${build}" />
+  </path>
+  
+  <target name="init">
+    <tstamp />
+    <mkdir dir="${build}"/>
+    <mkdir dir="${build}/log"/>
+  </target>
+
+  <target name="compile" depends="init, generate">
+    <javac includeantruntime="false" srcdir="${gen}" destdir="${build}" source="1.6" target="1.6" classpathref="libs.classpath"/>
+    <javac includeantruntime="false" srcdir="${src}" destdir="${build}" source="1.6" target="1.6" classpathref="build.classpath"/>
+    <jar jarfile="a1.jar" basedir="${build}"/>
+  </target>
+
+  <target name="generate">
+    <exec executable="thrift" failonerror="true">
+      <arg line="--gen java -r  a1.thrift"/>
+    </exec>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build}" />
+    <delete dir="${gen}"/>
+    <delete file="a1.jar" />
+  </target>
+
+  <target name="runserver" description="Run server" depends="compile">
+      <java classname="a1.StorageNode" fork="false"
+        classpathref="a1.classpath" failonerror="false">
+	<arg line="a1.config 0"/>
+      </java>
+  </target>
+
+  <target name="runclient" description="Run client" depends="compile">
+      <java classname="a1.Client" fork="false"
+        classpathref="a1.classpath" failonerror="false">
+	<arg line="a1.config"/>
+      </java>
+  </target>
+</project>
