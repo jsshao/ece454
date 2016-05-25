@@ -56,9 +56,15 @@ public class KeyValueHandler implements KeyValueService.Iface {
         for (int i = 0; i < keys.size(); i++) {
             String key = keys.get(i);
             ByteBuffer value = values.get(i);
+            int expectedServer = key.hashCode() % mNumOfServers;
 
-            oldValues.add(map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
-            map.put(key, value); } 
+            if (expectedServer == mServerId) {
+                oldValues.add(map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
+                map.put(key, value); 
+            } else {
+                oldValues.add(putRemote(key, value));
+            }
+        }
         return oldValues;
     }
 
@@ -71,8 +77,31 @@ public class KeyValueHandler implements KeyValueService.Iface {
             KeyValueService.Client client = new KeyValueService.Client(protocol);
             transport.open();
 
-            String[] desired = new String[] { key };
-            List<ByteBuffer> ret = client.multiGet(Arrays.asList(desired));
+            List<String> keyList = new ArrayList<String>();
+            keyList.add(key);
+            List<ByteBuffer> ret = client.multiGet(keyList);
+            transport.close();
+            return ret.get(0);
+        } catch (TException x) {
+            x.printStackTrace();
+        }
+        return ByteBuffer.allocate(0);
+    }
+
+    private ByteBuffer putRemote(String key, ByteBuffer value) {
+        try {
+            int expectedServer = key.hashCode() % mNumOfServers;
+            TSocket sock = new TSocket(mHosts.get(expectedServer), mPorts.get(expectedServer));
+            TTransport transport = new TFramedTransport(sock);
+            TProtocol protocol = new TBinaryProtocol(transport);
+            KeyValueService.Client client = new KeyValueService.Client(protocol);
+            transport.open();
+
+            List<String> keyList = new ArrayList<String>();
+            keyList.add(key);
+            List<ByteBuffer> valueList = new ArrayList<ByteBuffer>();
+            valueList.add(value);
+            List<ByteBuffer> ret = client.multiPut(keyList, valueList);
             transport.close();
             return ret.get(0);
         } catch (TException x) {
