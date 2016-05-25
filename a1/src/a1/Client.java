@@ -1,9 +1,10 @@
 package a1;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 import java.nio.ByteBuffer;
+
 import org.apache.thrift.*;
 import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
@@ -30,7 +31,7 @@ public class Client {
             client.multiPut(Arrays.asList(names),  values);
 
             List<ByteBuffer> ret = client.multiGet(Arrays.asList(desired));
-            System.out.println(ret);
+            System.out.println(ret.get(0).equals(ByteBuffer.wrap(one)));
 
             client.multiGet(Arrays.asList(errname));
 

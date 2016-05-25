@@ -36,7 +36,7 @@ public class StorageNode {
         // Launch a Thrift server here
         try {
             KeyValueService.Processor processor = 
-                new KeyValueService.Processor(new KeyValueHandler());
+                new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
             TServerSocket socket = new TServerSocket(ports.get(myNum));
             TSimpleServer.Args sargs = new TSimpleServer.Args(socket);
             sargs.protocolFactory(new TBinaryProtocol.Factory());
@@ -46,6 +46,7 @@ public class StorageNode {
             server.serve();
         } catch (TException x) {
             // How to propagate?
+            x.printStackTrace();
             throw x;
         }
     }

@@ -2,14 +2,30 @@ package a1;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 import java.util.List;
+
+import org.apache.thrift.*;
+import org.apache.thrift.transport.*;
+import org.apache.thrift.protocol.*;
 
 public class KeyValueHandler implements KeyValueService.Iface {
     private ConcurrentHashMap<String, ByteBuffer> map = new ConcurrentHashMap<String, ByteBuffer>();
+    private HashMap<Integer, String> mHosts;
+    private HashMap<Integer, Integer> mPorts;
+    private int mServerId;
+    private int mNumOfServers;
 
-    public List<String> getGroupMembers()
-    {
+    public KeyValueHandler(HashMap<Integer, String> hosts, HashMap<Integer, Integer> ports, int serverId) {
+        mHosts = hosts;
+        mPorts = ports; 
+        mNumOfServers = hosts.size();
+        mServerId = serverId;
+    }
+
+    public List<String> getGroupMembers() {
         List<String> ret = new ArrayList<String>();
         ret.add("jsshao");
         ret.add("mhlu");
@@ -19,7 +35,12 @@ public class KeyValueHandler implements KeyValueService.Iface {
     public List<ByteBuffer> multiGet(List<String> keys) {
         List<ByteBuffer> values = new ArrayList<ByteBuffer>(keys.size()); 
         for (String key : keys) {
-            values.add(map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
+            int expectedServer = key.hashCode() % mNumOfServers;
+            if (expectedServer == mServerId) {
+                values.add(map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
+            } else {
+                values.add(getRemote(key));
+            }
         }
 
         return values;
@@ -37,9 +58,26 @@ public class KeyValueHandler implements KeyValueService.Iface {
             ByteBuffer value = values.get(i);
 
             oldValues.add(map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
-            map.put(key, value);
-        }
-
+            map.put(key, value); } 
         return oldValues;
+    }
+
+    private ByteBuffer getRemote(String key) {
+        try {
+            int expectedServer = key.hashCode() % mNumOfServers;
+            TSocket sock = new TSocket(mHosts.get(expectedServer), mPorts.get(expectedServer));
+            TTransport transport = new TFramedTransport(sock);
+            TProtocol protocol = new TBinaryProtocol(transport);
+            KeyValueService.Client client = new KeyValueService.Client(protocol);
+            transport.open();
+
+            String[] desired = new String[] { key };
+            List<ByteBuffer> ret = client.multiGet(Arrays.asList(desired));
+            transport.close();
+            return ret.get(0);
+        } catch (TException x) {
+            x.printStackTrace();
+        }
+        return ByteBuffer.allocate(0);
     }
 }
