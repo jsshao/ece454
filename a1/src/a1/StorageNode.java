@@ -7,8 +7,10 @@ import java.util.HashMap;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TServerSocket;
+import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessorFactory;
 
@@ -34,7 +36,7 @@ public class StorageNode {
         System.out.println("My host and port: " + hosts.get(myNum) + ":" + ports.get(myNum));
 
         // Launch a Thrift server here
-        try {
+/*        try {
             KeyValueService.Processor processor = 
                 new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
             TServerSocket socket = new TServerSocket(ports.get(myNum));
@@ -43,6 +45,17 @@ public class StorageNode {
             sargs.transportFactory(new TFramedTransport.Factory());
             sargs.processorFactory(new TProcessorFactory(processor));
             TServer server = new TSimpleServer(sargs);
+            server.serve();
+*/
+        try {
+            KeyValueService.Processor processor = 
+                new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
+            TNonblockingServerSocket socket = new TNonblockingServerSocket(ports.get(myNum));
+            TThreadedSelectorServer.Args sargs = new TThreadedSelectorServer.Args(socket);
+            sargs.protocolFactory(new TBinaryProtocol.Factory());
+            sargs.transportFactory(new TFramedTransport.Factory());
+            sargs.processorFactory(new TProcessorFactory(processor));
+            TThreadedSelectorServer server = new TThreadedSelectorServer(sargs);
             server.serve();
         } catch (TException x) {
             // How to propagate?
