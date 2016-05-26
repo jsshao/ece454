@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.HashMap;
+import java.util.Random;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -15,6 +16,9 @@ import org.apache.thrift.protocol.*;
 
 public class Client {
     public static void main(String [] args) {
+        final String alphabet = "0123456789ABCDE";
+        final int N = alphabet.length();
+
         try {
             if (args.length != 1) {
                 System.err.println("Usage: java a1.Client config_file");
@@ -39,7 +43,6 @@ public class Client {
             }
 
             HashMap<Integer, KeyValueService.Client> client = new HashMap<Integer, KeyValueService.Client>();
-            //HashMap<Integer, TTransport> transport = new HashMap<Integer, TTransport>();
             
 
             System.out.println("check point 1");
@@ -53,31 +56,27 @@ public class Client {
                 client.put(j, c);
             }
 
-
             System.out.println("check point 2");
+            Random r = new Random();
 
-            KeyValueService.Client c = client.get(0);
-            String[] names = new String[] {"Frank", "Jason", "Eddy"};
-            String[] desired = new String[] {"Frank", "Jason", "Eddy"};
-            String[] errname = new String[] {"Kevin"};
-            ArrayList<ByteBuffer> values = new ArrayList<ByteBuffer>();
-            byte one[] = {1};
-            byte zero[] = {0};
-            values.add(ByteBuffer.wrap(one));
-            values.add(ByteBuffer.wrap(zero));
-            values.add(ByteBuffer.wrap(one));
+            for (int j = 0; j < i; j++) {
+                KeyValueService.Client c = client.get(j);
+                List<String> keys = new ArrayList<String>();
+                List<ByteBuffer> values = new ArrayList<ByteBuffer>();
+                for (int k = 0; k < 1000; k++) {
+                    String key = new String(new char[999]).replace("\0", "a") + alphabet.charAt(r.nextInt(N));
+                    keys.add(key);
+                    byte value[] = new byte[10000];
+                    new Random().nextBytes(value);
+                    values.add(ByteBuffer.wrap(value));
+                }
 
-            c.multiPut(Arrays.asList(names),  values);
+                c.multiPut(keys, values);
+                List<ByteBuffer> ret = c.multiGet(keys);
 
-            System.out.println("check point 3");
-
-            List<ByteBuffer> ret = c.multiGet(Arrays.asList(desired));
-            System.out.println(ret.get(0).equals(ByteBuffer.wrap(one)));
-            System.out.println(ret.get(1).equals(ByteBuffer.wrap(zero)));
-            System.out.println(ret.get(2).equals(ByteBuffer.wrap(one)));
-
-            c.multiGet(Arrays.asList(errname));
-
+                // Check last element which is guaranteed to be same
+                System.out.println(ret.get(ret.size() - 1).equals(values.get(values.size() - 1)));
+            }
         } catch (IllegalArgument ia) {
             System.err.println(ia.message);
         } catch (TException x) {
