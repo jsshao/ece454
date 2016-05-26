@@ -58,7 +58,7 @@ public class Client {
 
             KeyValueService.Client c = client.get(0);
             String[] names = new String[] {"Frank", "Jason", "Eddy"};
-            String[] desired = new String[] {"Eddy"};
+            String[] desired = new String[] {"Frank", "Jason", "Eddy"};
             String[] errname = new String[] {"Kevin"};
             ArrayList<ByteBuffer> values = new ArrayList<ByteBuffer>();
             byte one[] = {1};
@@ -73,6 +73,8 @@ public class Client {
 
             List<ByteBuffer> ret = c.multiGet(Arrays.asList(desired));
             System.out.println(ret.get(0).equals(ByteBuffer.wrap(one)));
+            System.out.println(ret.get(1).equals(ByteBuffer.wrap(zero)));
+            System.out.println(ret.get(2).equals(ByteBuffer.wrap(one)));
 
             c.multiGet(Arrays.asList(errname));
 
