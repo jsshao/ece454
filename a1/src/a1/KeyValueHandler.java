@@ -15,12 +15,14 @@ public class KeyValueHandler implements KeyValueService.Iface {
     private ConcurrentHashMap<String, ByteBuffer> map = new ConcurrentHashMap<String, ByteBuffer>();
     private HashMap<Integer, String> mHosts;
     private HashMap<Integer, Integer> mPorts;
+    private ConnectionPool mPool;
     private int mServerId;
     private int mNumOfServers;
 
     public KeyValueHandler(HashMap<Integer, String> hosts, HashMap<Integer, Integer> ports, int serverId) {
         mHosts = hosts;
         mPorts = ports; 
+        mPool = new ConnectionPool(hosts, ports);
         mNumOfServers = hosts.size();
         mServerId = serverId;
     }
@@ -69,18 +71,16 @@ public class KeyValueHandler implements KeyValueService.Iface {
     }
 
     private ByteBuffer getRemote(String key) {
+        System.out.println("Making remote get call to " + key);
         try {
             int expectedServer = key.hashCode() % mNumOfServers;
-            TSocket sock = new TSocket(mHosts.get(expectedServer), mPorts.get(expectedServer));
-            TTransport transport = new TFramedTransport(sock);
-            TProtocol protocol = new TBinaryProtocol(transport);
-            KeyValueService.Client client = new KeyValueService.Client(protocol);
-            transport.open();
+            KeyValueService.Client client = mPool.getConnection(expectedServer);
 
             List<String> keyList = new ArrayList<String>();
             keyList.add(key);
             List<ByteBuffer> ret = client.multiGet(keyList);
-            transport.close();
+
+            mPool.releaseConnection(expectedServer, client);
             return ret.get(0);
         } catch (TException x) {
             x.printStackTrace();
@@ -89,20 +89,19 @@ public class KeyValueHandler implements KeyValueService.Iface {
     }
 
     private ByteBuffer putRemote(String key, ByteBuffer value) {
+        System.out.println("Making remote put call to " + key);
         try {
             int expectedServer = key.hashCode() % mNumOfServers;
-            TSocket sock = new TSocket(mHosts.get(expectedServer), mPorts.get(expectedServer));
-            TTransport transport = new TFramedTransport(sock);
-            TProtocol protocol = new TBinaryProtocol(transport);
-            KeyValueService.Client client = new KeyValueService.Client(protocol);
-            transport.open();
+            KeyValueService.Client client = mPool.getConnection(expectedServer);
 
             List<String> keyList = new ArrayList<String>();
             keyList.add(key);
             List<ByteBuffer> valueList = new ArrayList<ByteBuffer>();
             valueList.add(value);
+            System.out.println(client);
             List<ByteBuffer> ret = client.multiPut(keyList, valueList);
-            transport.close();
+
+            mPool.releaseConnection(expectedServer, client);
             return ret.get(0);
         } catch (TException x) {
             x.printStackTrace();

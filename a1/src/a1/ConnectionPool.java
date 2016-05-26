@@ -19,6 +19,8 @@ public class ConnectionPool {
     public ConnectionPool(HashMap<Integer, String> hosts, HashMap<Integer, Integer> ports) {
         mHosts = hosts;
         mPorts = ports;
+        mPool = new HashMap<Integer, ConcurrentLinkedQueue<KeyValueService.Client>>();
+        mNumExistingConnections = new ConcurrentHashMap<Integer, Integer>();
         for (Integer serverId : hosts.keySet()) {
             mNumExistingConnections.put(serverId, 0);
             mPool.put(serverId, new ConcurrentLinkedQueue<KeyValueService.Client>());
@@ -27,11 +29,13 @@ public class ConnectionPool {
 
     public KeyValueService.Client getConnection(int serverId) {
         ConcurrentLinkedQueue<KeyValueService.Client> queue = mPool.get(serverId);
-        if (mNumExistingConnections.get(serverId) < CONNECTION_LIMIT) {
-            mNumExistingConnections.put(serverId, mNumExistingConnections.get(serverId) + 1);
-            return createNewClient(serverId);
-        } else {
-            synchronized (queue) {
+        synchronized(queue) {
+            if (queue.isEmpty() && mNumExistingConnections.get(serverId) < CONNECTION_LIMIT) {
+                System.out.println("Creating new connection");
+                mNumExistingConnections.put(serverId, mNumExistingConnections.get(serverId) + 1);
+                return createNewClient(serverId);
+            } else {
+                System.out.println("Waiting for connection to be free");
                 while (queue.isEmpty()) {
                     try {
                         Thread.sleep(POLL_FREQUENCY_MS);
@@ -47,9 +51,11 @@ public class ConnectionPool {
     public void releaseConnection(int serverId, KeyValueService.Client client) {
         ConcurrentLinkedQueue<KeyValueService.Client> queue = mPool.get(serverId);
         queue.offer(client);
+        System.out.println("Putting client back into queue");
     }
 
     private KeyValueService.Client createNewClient(int serverId) {
+        System.out.println("Creating new client with server " + serverId);
         try {
             TSocket sock = new TSocket(mHosts.get(serverId), mPorts.get(serverId));
             TTransport transport = new TFramedTransport(sock);

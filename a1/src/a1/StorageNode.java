@@ -14,6 +14,7 @@ import org.apache.thrift.TProcessorFactory;
 
 public class StorageNode {
     public static void main(String [] args) throws Exception {
+        org.apache.log4j.BasicConfigurator.configure();
         if (args.length != 2) {
             System.err.println("Usage: java a1.StorageNode config_file node_num");
             System.exit(-1);
