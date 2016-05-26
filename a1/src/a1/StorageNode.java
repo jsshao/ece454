@@ -51,7 +51,7 @@ public class StorageNode {
         try {
             KeyValueService.Processor processor = 
                 new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
-            TNonblockingServerSocket socket = new TNonblockingServerSocket(ports.get(myNum));
+            TServerSocket socket = new TServerSocket(ports.get(myNum));
             TThreadPoolServer.Args sargs = new TThreadPoolServer.Args(socket);
             sargs.protocolFactory(new TBinaryProtocol.Factory());
             sargs.transportFactory(new TFramedTransport.Factory());

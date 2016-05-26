@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 
 import org.apache.thrift.*;
@@ -36,30 +37,35 @@ public class KeyValueHandler implements KeyValueService.Iface {
 
     public List<ByteBuffer> multiGet(List<String> keys) {
         List<ByteBuffer> values = new ArrayList<ByteBuffer>(keys.size()); 
-        HashMap<Integer, ArrayList<String>> batch = new HashMap<Integer, ArrayList<String>>();
-        HashMap<Integer, ArrayList<Integer>> stringId = new HashMap<Integer, ArrayList<Integer>>();
+        HashMap<Integer, ArrayList<String>> batches = new HashMap<Integer, ArrayList<String>>();
+        HashMap<Integer, ArrayList<Integer>> batchStringIds = new HashMap<Integer, ArrayList<Integer>>();
+        HashMap<Integer, ByteBuffer> resMap = new HashMap<Integer, ByteBuffer>();
         for (int i=0; i<keys.size(); i++) {
             String key = keys.get(i);
             int expectedServer = key.hashCode() % mNumOfServers;
 
-            if ( !batch.containsKey(expectedServer) ) {
-                batch.put(expectedServer, new ArrayList<String>);
-                stringId.put(expectedServer, new ArrayList<Integer>);
+            if ( expectedServer == mServerId ) {
+                resMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
+                continue;
             }
-            ArrayList<String> batchKeys = batch.get(expectedServer);
-            ArrayList<Integer> id = stringId.get(expectedServer);
-            batchKeys.add(key);
-            id.add(i);
+
+            if ( !batches.containsKey(expectedServer) ) {
+                batches.put(expectedServer, new ArrayList<String>());
+                batchStringIds.put(expectedServer, new ArrayList<Integer>());
+            }
+            List<String> batchesKeys = batches.get(expectedServer);
+            List<Integer> ids = batchStringIds.get(expectedServer);
+            batchesKeys.add(key);
+            ids.add(i);
         }
 
-        HashMap<Integer, String> resMap = new HashMap<Integer, String>();
-        for (Map.Entry<String, Object> entry : batch.entrySet()) {
-            String serverId = entry.getKey();
-            ArrayList<String> batchKeys = entry.getValue();
-            ArrayList<Integer> id = stringId.get(serverId);
-            List<ByteBuffer> remoteRes = getRremote(batchKeys);
+        for (Map.Entry<Integer, ArrayList<String>> entry : batches.entrySet()) {
+            Integer serverId = entry.getKey();
+            List<String> batchKeys = entry.getValue();
+            List<Integer> ids = batchStringIds.get(serverId);
+            List<ByteBuffer> remoteRes = getRemote(batchKeys, serverId);
             for (int i=0; i<remoteRes.size(); i++) {
-                resMap.put(id.get(i), remoteRes.get(i));
+                resMap.put(ids.get(i), remoteRes.get(i));
             }
         }
 
@@ -92,22 +98,16 @@ public class KeyValueHandler implements KeyValueService.Iface {
         return oldValues;
     }
 
-    private ByteBuffer getRemote(String key) {
-        System.out.println("Making remote get call to " + key);
+    private List<ByteBuffer> getRemote(List<String> keys, Integer server) {
+        System.out.println("Making remote get call to " + server);
         try {
-            int expectedServer = key.hashCode() % mNumOfServers;
-            KeyValueService.Client client = mPool.getConnection(expectedServer);
-
-            List<String> keyList = new ArrayList<String>();
-            keyList.add(key);
-            List<ByteBuffer> ret = client.multiGet(keyList);
-
-            mPool.releaseConnection(expectedServer, client);
-            return ret.get(0);
+            KeyValueService.Client client = mPool.getConnection(server);
+            List<ByteBuffer> ret = client.multiGet(keys);
+            mPool.releaseConnection(server, client);
+            return ret;
         } catch (TException x) {
             x.printStackTrace();
         }
-        return ByteBuffer.allocate(0);
     }
 
     private ByteBuffer putRemote(String key, ByteBuffer value) {
