@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -11,6 +12,86 @@ import java.util.List;
 import org.apache.thrift.*;
 import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
+import org.apache.thrift.async.*;
+
+
+class MultiGetCallback implements AsyncMethodCallback<KeyValueService.AsyncClient.multiGet_call> {
+    private List<Integer> mIds;
+    private Map<Integer, ByteBuffer> mRetMap;
+    private CountDownLatch mLatch;
+    private Integer mServer; 
+    private KeyValueService.AsyncClient mClient;
+    private ConnectionPool mPool;
+
+    public MultiGetCallback(List<Integer> ids, Map<Integer, ByteBuffer> retMap, CountDownLatch latch,
+            ConnectionPool pool, Integer server, KeyValueService.AsyncClient client) {
+        mIds = ids;
+        mRetMap = retMap;
+        mLatch = latch;
+        mServer = server;
+        mClient = client;
+        mPool = pool;
+    }
+
+    public void onComplete(KeyValueService.AsyncClient.multiGet_call c) {
+        try {
+            List<ByteBuffer> ret = c.getResult();
+            for (int i=0; i<mIds.size(); i++) {
+                mRetMap.put(mIds.get(i), ret.get(i));
+            }
+            
+        } catch (TException e) {
+            e.printStackTrace();
+        }
+        mLatch.countDown();
+        mPool.releaseConnection(mServer, mClient);
+    }
+
+    public void onError(Exception e) {
+        e.printStackTrace();
+        mLatch.countDown();
+        mPool.releaseConnection(mServer, mClient);
+    }
+}
+
+class MultiPutCallback implements AsyncMethodCallback<KeyValueService.AsyncClient.multiPut_call> {
+    private List<Integer> mIds;
+    private Map<Integer, ByteBuffer> mRetMap;
+    private CountDownLatch mLatch;
+    private Integer mServer; 
+    private KeyValueService.AsyncClient mClient;
+    private ConnectionPool mPool;
+    
+    public MultiPutCallback(List<Integer> ids, Map<Integer, ByteBuffer> retMap, CountDownLatch latch,
+            ConnectionPool pool, Integer server, KeyValueService.AsyncClient client) {
+        mIds = ids;
+        mRetMap = retMap;
+        mLatch = latch;
+        mServer = server;
+        mClient = client;
+        mPool = pool;
+    }
+     
+    public void onComplete(KeyValueService.AsyncClient.multiPut_call c) {
+        try {
+            List<ByteBuffer> ret = c.getResult();
+            for (int i=0; i<mIds.size(); i++) {
+                mRetMap.put(mIds.get(i), ret.get(i));
+            }
+            
+        } catch (TException e) {
+            e.printStackTrace();
+        }
+        mLatch.countDown();
+        mPool.releaseConnection(mServer, mClient);
+    }
+
+    public void onError(Exception e) {
+        e.printStackTrace();
+        mLatch.countDown();
+        mPool.releaseConnection(mServer, mClient);
+    }
+}
 
 public class KeyValueHandler implements KeyValueService.Iface {
     private ConcurrentHashMap<String, ByteBuffer> map = new ConcurrentHashMap<String, ByteBuffer>();
@@ -39,13 +120,13 @@ public class KeyValueHandler implements KeyValueService.Iface {
         List<ByteBuffer> values = new ArrayList<ByteBuffer>(keys.size()); 
         HashMap<Integer, ArrayList<String>> batches = new HashMap<Integer, ArrayList<String>>();
         HashMap<Integer, ArrayList<Integer>> keyIds = new HashMap<Integer, ArrayList<Integer>>();
-        HashMap<Integer, ByteBuffer> resMap = new HashMap<Integer, ByteBuffer>();
+        HashMap<Integer, ByteBuffer> retMap = new HashMap<Integer, ByteBuffer>();
         for (int i=0; i<keys.size(); i++) {
             String key = keys.get(i);
             int expectedServer = key.hashCode() % mNumOfServers;
 
             if ( expectedServer == mServerId ) {
-                resMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
+                retMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
                 continue;
             }
 
@@ -59,18 +140,22 @@ public class KeyValueHandler implements KeyValueService.Iface {
             ids.add(i);
         }
 
+        CountDownLatch latch = new CountDownLatch(batches.size());
         for (Map.Entry<Integer, ArrayList<String>> entry : batches.entrySet()) {
-            Integer serverId = entry.getKey();
+            Integer server = entry.getKey();
             List<String> batch = entry.getValue();
-            List<Integer> ids = keyIds.get(serverId);
-            List<ByteBuffer> remoteRes = getRemote(batch, serverId);
-            for (int i=0; i<remoteRes.size(); i++) {
-                resMap.put(ids.get(i), remoteRes.get(i));
-            }
+            List<Integer> ids = keyIds.get(server);
+            getRemote(batch, server, ids, retMap, latch);
+        }
+    
+        try {
+            latch.await();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         for (int i=0; i<keys.size(); i++) {
-            values.add(resMap.get(i));
+            values.add(retMap.get(i));
         }
 
         return values;
@@ -85,7 +170,7 @@ public class KeyValueHandler implements KeyValueService.Iface {
         HashMap<Integer, ArrayList<String>> keyBatches = new HashMap<Integer, ArrayList<String>>();
         HashMap<Integer, ArrayList<ByteBuffer>> valueBatches = new HashMap<Integer, ArrayList<ByteBuffer>>();
         HashMap<Integer, ArrayList<Integer>> keyIds = new HashMap<Integer, ArrayList<Integer>>();
-        HashMap<Integer, ByteBuffer> resMap = new HashMap<Integer, ByteBuffer>();
+        HashMap<Integer, ByteBuffer> retMap = new HashMap<Integer, ByteBuffer>();
 
         for (int i=0; i<keys.size(); i++) {
             String key = keys.get(i);
@@ -93,7 +178,7 @@ public class KeyValueHandler implements KeyValueService.Iface {
             int expectedServer = key.hashCode() % mNumOfServers;
 
             if ( expectedServer == mServerId ) {
-                resMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
+                retMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
                 map.put(key, value);
                 continue;
             }
@@ -111,50 +196,52 @@ public class KeyValueHandler implements KeyValueService.Iface {
             ids.add(i);
         }
 
+        CountDownLatch latch = new CountDownLatch(keyBatches.size());
         for (Map.Entry<Integer, ArrayList<String>> entry : keyBatches.entrySet()) {
-            Integer serverId = entry.getKey();
+            Integer server = entry.getKey();
             List<String> keyBatch = entry.getValue();
-            List<ByteBuffer> valueBatch = valueBatches.get(serverId);
-            List<Integer> ids = keyIds.get(serverId);
-            List<ByteBuffer> remoteRes = putRemote(keyBatch, valueBatch, serverId);
-            for (int i=0; i<remoteRes.size(); i++) {
-                resMap.put(ids.get(i), remoteRes.get(i));
-            }
+            List<ByteBuffer> valueBatch = valueBatches.get(server);
+            List<Integer> ids = keyIds.get(server);
+            putRemote(keyBatch, valueBatch, server, ids, retMap, latch);
+        }
+
+        try {
+            latch.await();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         for (int i=0; i<keys.size(); i++) {
-            oldValues.add(resMap.get(i));
+            oldValues.add(retMap.get(i));
         }
         return oldValues;
     }
 
-    private List<ByteBuffer> getRemote(List<String> keys, Integer server) {
+    private void getRemote(List<String> keys, Integer server,
+            List<Integer> ids, Map<Integer, ByteBuffer> retMap, CountDownLatch latch) {
         System.out.print("Making remote get call to " + server + " for ( ");
         for(String s: keys) System.out.print(s + " ");
         System.out.println(" )");
         try {
-            KeyValueService.Client client = mPool.getConnection(server);
-            List<ByteBuffer> ret = client.multiGet(keys);
-            mPool.releaseConnection(server, client);
-            return ret;
+            KeyValueService.AsyncClient client = mPool.getConnection(server);
+            MultiGetCallback callback = new MultiGetCallback(ids, retMap, latch, mPool, server, client);
+            client.multiGet(keys, callback);
         } catch (TException x) {
             x.printStackTrace();
         }
-        return null;
     }
 
-    private List<ByteBuffer> putRemote(List<String> keys, List<ByteBuffer> values, Integer server) {
+    private void putRemote(List<String> keys, List<ByteBuffer> values, Integer server,
+            List<Integer> ids, Map<Integer, ByteBuffer> retMap, CountDownLatch latch) {
         System.out.print("Making remote put call to " + server + " for ( ");
         for(String s: keys) System.out.print(s + " ");
         System.out.println(" )");
         try {
-            KeyValueService.Client client = mPool.getConnection(server);
-            List<ByteBuffer> ret = client.multiPut(keys, values);
-            mPool.releaseConnection(server, client);
-            return ret;
+            KeyValueService.AsyncClient client = mPool.getConnection(server);
+            MultiPutCallback callback = new MultiPutCallback(ids, retMap, latch, mPool, server, client);
+            client.multiPut(keys, values, callback);
         } catch (TException x) {
             x.printStackTrace();
         }
-        return null;
     }
 }
