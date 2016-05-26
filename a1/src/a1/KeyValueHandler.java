@@ -36,13 +36,35 @@ public class KeyValueHandler implements KeyValueService.Iface {
 
     public List<ByteBuffer> multiGet(List<String> keys) {
         List<ByteBuffer> values = new ArrayList<ByteBuffer>(keys.size()); 
-        for (String key : keys) {
+        HashMap<Integer, ArrayList<String>> batch = new HashMap<Integer, ArrayList<String>>();
+        HashMap<Integer, ArrayList<Integer>> stringId = new HashMap<Integer, ArrayList<Integer>>();
+        for (int i=0; i<keys.size(); i++) {
+            String key = keys.get(i);
             int expectedServer = key.hashCode() % mNumOfServers;
-            if (expectedServer == mServerId) {
-                values.add(map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
-            } else {
-                values.add(getRemote(key));
+
+            if ( !batch.containsKey(expectedServer) ) {
+                batch.put(expectedServer, new ArrayList<String>);
+                stringId.put(expectedServer, new ArrayList<Integer>);
             }
+            ArrayList<String> batchKeys = batch.get(expectedServer);
+            ArrayList<Integer> id = stringId.get(expectedServer);
+            batchKeys.add(key);
+            id.add(i);
+        }
+
+        HashMap<Integer, String> resMap = new HashMap<Integer, String>();
+        for (Map.Entry<String, Object> entry : batch.entrySet()) {
+            String serverId = entry.getKey();
+            ArrayList<String> batchKeys = entry.getValue();
+            ArrayList<Integer> id = stringId.get(serverId);
+            List<ByteBuffer> remoteRes = getRremote(batchKeys);
+            for (int i=0; i<remoteRes.size(); i++) {
+                resMap.put(id.get(i), remoteRes.get(i));
+            }
+        }
+
+        for (int i=0; i<keys.size(); i++) {
+            values.add(resMap.get(i));
         }
 
         return values;
