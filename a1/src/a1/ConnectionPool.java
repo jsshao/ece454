@@ -31,6 +31,10 @@ public class ConnectionPool {
 
     public KeyValueService.AsyncClient getConnection(int serverId) {
         ConcurrentLinkedQueue<KeyValueService.AsyncClient> queue = mPool.get(serverId);
+        if (queue == null) {
+            System.out.println("Tried to get queue for " + serverId);
+            return null;
+        }
         synchronized(queue) {
             if (queue.isEmpty() && mNumExistingConnections.get(serverId) < CONNECTION_LIMIT) {
                 System.out.println("Creating new connection");

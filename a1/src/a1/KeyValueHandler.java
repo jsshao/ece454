@@ -123,7 +123,7 @@ public class KeyValueHandler implements KeyValueService.Iface {
         HashMap<Integer, ByteBuffer> retMap = new HashMap<Integer, ByteBuffer>();
         for (int i=0; i<keys.size(); i++) {
             String key = keys.get(i);
-            int expectedServer = key.hashCode() % mNumOfServers;
+            int expectedServer = ((key.hashCode() % mNumOfServers) + mNumOfServers) % mNumOfServers;
 
             if ( expectedServer == mServerId ) {
                 retMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
@@ -175,7 +175,7 @@ public class KeyValueHandler implements KeyValueService.Iface {
         for (int i=0; i<keys.size(); i++) {
             String key = keys.get(i);
             ByteBuffer value = values.get(i);
-            int expectedServer = key.hashCode() % mNumOfServers;
+            int expectedServer = ((key.hashCode() % mNumOfServers) + mNumOfServers) % mNumOfServers;
 
             if ( expectedServer == mServerId ) {
                 retMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
@@ -219,9 +219,11 @@ public class KeyValueHandler implements KeyValueService.Iface {
 
     private void getRemote(List<String> keys, Integer server,
             List<Integer> ids, Map<Integer, ByteBuffer> retMap, CountDownLatch latch) {
+        /*
         System.out.print("Making remote get call to " + server + " for ( ");
         for(String s: keys) System.out.print(s + " ");
         System.out.println(" )");
+        */
         try {
             KeyValueService.AsyncClient client = mPool.getConnection(server);
             MultiGetCallback callback = new MultiGetCallback(ids, retMap, latch, mPool, server, client);
@@ -233,9 +235,11 @@ public class KeyValueHandler implements KeyValueService.Iface {
 
     private void putRemote(List<String> keys, List<ByteBuffer> values, Integer server,
             List<Integer> ids, Map<Integer, ByteBuffer> retMap, CountDownLatch latch) {
+        /*
         System.out.print("Making remote put call to " + server + " for ( ");
         for(String s: keys) System.out.print(s + " ");
         System.out.println(" )");
+        */
         try {
             KeyValueService.AsyncClient client = mPool.getConnection(server);
             MultiPutCallback callback = new MultiPutCallback(ids, retMap, latch, mPool, server, client);
