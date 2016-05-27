@@ -57,7 +57,7 @@ public class StorageNode {
             sargs.protocolFactory(new TBinaryProtocol.Factory());
             sargs.processor(processor);
             sargs.selectorThreads(4);
-            sargs.workerThreads(32);
+            sargs.workerThreads(16);
             TServer server = new TThreadedSelectorServer(sargs);
             server.serve();
         

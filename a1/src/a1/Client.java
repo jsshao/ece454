@@ -153,7 +153,7 @@ public class Client {
     }
 
     public void runTests(String [] args) {
-        int NUM_OF_THREADS = 1;
+        int NUM_OF_THREADS = 32;
         for (int i = 0; i < NUM_OF_THREADS; i++) {
             Worker worker = new Worker("", args);
             worker.start();
