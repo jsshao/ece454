@@ -80,12 +80,17 @@ public class Client {
                         if (arr.length != 0)
                             System.out.println("ERROR: Expected length 0 but got " + arr.length);
                     }
-                    //List<ByteBuffer> ret = c.multiGet(keys);
+                    startTime = System.currentTimeMillis();
+                    ret = c.multiGet(keys);
+                    correctness_duration += System.currentTimeMillis() - startTime;
+                    if (!ret.equals(values)) {
+                        System.out.println("ERROR: Get values did not match");
+                    }
                 }
             }
 
             System.out.println("Correctness Test Finished");
-            System.out.println("Average Latency: " + correctness_duration / 100.0 / i);
+            System.out.println("Average Latency: " + correctness_duration / 100.0 / 2 / i);
 
             // Stress each client with with 100 requests of maximum size
             long stress_duration = 0;
@@ -101,7 +106,7 @@ public class Client {
                     for (int k = 0; k < 1000; k++) {
                         String key = new String(new char[999]).replace("\0", "a") + alphabet.charAt(r.nextInt(N));
                         keys.add(key);
-                        byte value[] = new byte[100];
+                        byte value[] = new byte[1000];
                         new Random().nextBytes(value);
                         values.add(ByteBuffer.wrap(value));
                     }
