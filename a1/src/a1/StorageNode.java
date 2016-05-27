@@ -4,13 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.HashMap;
 
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TSimpleServer;
-import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.server.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessorFactory;
 
@@ -39,13 +35,42 @@ public class StorageNode {
         try {
             KeyValueService.Processor processor = 
                 new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
+            TNonblockingServerTransport trans = new TNonblockingServerSocket(ports.get(myNum));
+            THsHaServer.Args sargs = new THsHaServer.Args(trans);
+            sargs.transportFactory(new TFramedTransport.Factory());
+            sargs.protocolFactory(new TBinaryProtocol.Factory());
+            sargs.processor(processor);
+            //sargs.workerThreads(numThreads);
+            sargs.maxWorkerThreads(64);
+            sargs.minWorkerThreads(64);
+            TServer server = new THsHaServer(sargs);
+            server.serve();
+        
+        /*try {
+            KeyValueService.Processor processor = 
+                new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
+            TNonblockingServerTransport trans = new TNonblockingServerSocket(ports.get(myNum));
+            TThreadedSelectorServer.Args sargs = new TThreadedSelectorServer.Args(trans);
+            sargs.transportFactory(new TFramedTransport.Factory(1000000));
+            sargs.protocolFactory(new TBinaryProtocol.Factory());
+            sargs.processor(processor);
+            sargs.selectorThreads(4);
+            sargs.workerThreads(16);
+            TServer server = new TThreadedSelectorServer(sargs);
+            server.serve();*/
+        
+        /*try {
+            KeyValueService.Processor processor = 
+                new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
             TServerSocket socket = new TServerSocket(ports.get(myNum));
             TThreadPoolServer.Args sargs = new TThreadPoolServer.Args(socket);
             sargs.protocolFactory(new TBinaryProtocol.Factory());
             sargs.transportFactory(new TFramedTransport.Factory());
             sargs.processorFactory(new TProcessorFactory(processor));
+            sargs.maxWorkerThreads(64);
+            sargs.minWorkerThreads(64);
             TThreadPoolServer server = new TThreadPoolServer(sargs);
-            server.serve();
+            server.serve();*/
         } catch (TException x) {
             // How to propagate?
             x.printStackTrace();
