@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.UUID;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -31,10 +32,6 @@ public class Client {
             String line;
             int i = 0;
 
-
-            System.out.println("check point 0");
-
-
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(" ");
                 hosts.put(i, parts[0]);
@@ -43,9 +40,6 @@ public class Client {
             }
 
             HashMap<Integer, KeyValueService.Client> client = new HashMap<Integer, KeyValueService.Client>();
-            
-
-            System.out.println("check point 1");
             
             for ( int j=0; j<i; j++ ) {
                 TSocket sock = new TSocket(hosts.get(j), ports.get(j));
@@ -56,26 +50,59 @@ public class Client {
                 client.put(j, c);
             }
 
-            System.out.println("check point 2");
             Random r = new Random();
 
+            // Correctness test for each client 100 times
             for (int j = 0; j < i; j++) {
                 KeyValueService.Client c = client.get(j);
                 List<String> keys = new ArrayList<String>();
                 List<ByteBuffer> values = new ArrayList<ByteBuffer>();
-                for (int k = 0; k < 1000; k++) {
-                    String key = new String(new char[999]).replace("\0", "a") + alphabet.charAt(r.nextInt(N));
-                    keys.add(key);
-                    byte value[] = new byte[10000];
-                    new Random().nextBytes(value);
-                    values.add(ByteBuffer.wrap(value));
+
+                // Repeat request 100 times
+                for (int request = 0; request < 10; request++) {
+                    // Create random key-value pairs
+                    for (int k = 0; k < 1000; k++) {
+                        String key = UUID.randomUUID().toString();
+                        if (keys.contains(key)) {
+                            System.out.println("WTF");
+                            return;
+                        }
+                        keys.add(key);
+                        byte value[] = new byte[100];
+                        new Random().nextBytes(value);
+                        values.add(ByteBuffer.wrap(value));
+                    }
+                    List<ByteBuffer> ret;
+                    ret = c.multiPut(keys, values);
+                    for (ByteBuffer byteBuf: ret) {
+                        byte[] arr = new byte[byteBuf.remaining()];
+                        byteBuf.get(arr);
+                        if (arr.length != 0)
+                            System.out.println("ERROR: Expected length 0 but got " + arr.length);
+                    }
+                    //List<ByteBuffer> ret = c.multiGet(keys);
                 }
+            }
 
-                c.multiPut(keys, values);
-                List<ByteBuffer> ret = c.multiGet(keys);
+            // Stress each client with with 100 requests of maximum size
+            for (int j = 0; j < i; j++) {
+                KeyValueService.Client c = client.get(j);
+                List<String> keys = new ArrayList<String>();
+                List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
-                // Check last element which is guaranteed to be same
-                System.out.println(ret.get(ret.size() - 1).equals(values.get(values.size() - 1)));
+                // Repeat request 100 times
+                for (int request = 0; request < 10; request++) {
+                    // Create random key-value pairs
+                    for (int k = 0; k < 1000; k++) {
+                        String key = new String(new char[999]).replace("\0", "a") + alphabet.charAt(r.nextInt(N));
+                        keys.add(key);
+                        byte value[] = new byte[100];
+                        new Random().nextBytes(value);
+                        values.add(ByteBuffer.wrap(value));
+                    }
+                    c.multiPut(keys, values);
+                    List<ByteBuffer> ret = c.multiGet(keys);
+                }
             }
         } catch (IllegalArgument ia) {
             System.err.println(ia.message);
@@ -83,9 +110,7 @@ public class Client {
             x.printStackTrace();
         } catch (IOException io) {
 
-        } finally {
-            System.out.println("closing connection");
+        } finally { System.out.println("closing connection");
         } 
-
     }
 }

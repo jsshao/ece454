@@ -121,12 +121,14 @@ public class KeyValueHandler implements KeyValueService.Iface {
         HashMap<Integer, ArrayList<String>> batches = new HashMap<Integer, ArrayList<String>>();
         HashMap<Integer, ArrayList<Integer>> keyIds = new HashMap<Integer, ArrayList<Integer>>();
         HashMap<Integer, ByteBuffer> retMap = new HashMap<Integer, ByteBuffer>();
+        byte empty[] = {};
+
         for (int i=0; i<keys.size(); i++) {
             String key = keys.get(i);
             int expectedServer = ((key.hashCode() % mNumOfServers) + mNumOfServers) % mNumOfServers;
 
             if ( expectedServer == mServerId ) {
-                retMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
+                retMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.wrap(empty));
                 continue;
             }
 
@@ -171,6 +173,7 @@ public class KeyValueHandler implements KeyValueService.Iface {
         HashMap<Integer, ArrayList<ByteBuffer>> valueBatches = new HashMap<Integer, ArrayList<ByteBuffer>>();
         HashMap<Integer, ArrayList<Integer>> keyIds = new HashMap<Integer, ArrayList<Integer>>();
         HashMap<Integer, ByteBuffer> retMap = new HashMap<Integer, ByteBuffer>();
+        byte empty[] = {};
 
         for (int i=0; i<keys.size(); i++) {
             String key = keys.get(i);
@@ -178,7 +181,7 @@ public class KeyValueHandler implements KeyValueService.Iface {
             int expectedServer = ((key.hashCode() % mNumOfServers) + mNumOfServers) % mNumOfServers;
 
             if ( expectedServer == mServerId ) {
-                retMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.allocate(0));
+                retMap.put(i, map.containsKey(key) ? map.get(key) : ByteBuffer.wrap(empty));
                 map.put(key, value);
                 continue;
             }
