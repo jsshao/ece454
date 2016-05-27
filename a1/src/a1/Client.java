@@ -68,7 +68,7 @@ public class Client {
                     KeyValueService.Client c = client.get(j);
 
                     // Repeat request 100 times
-                    for (int request = 0; request < 100; request++) {
+                    for (int request = 0; request < 10000; request++) {
                         List<String> keys = new ArrayList<String>();
                         List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
@@ -101,7 +101,7 @@ public class Client {
                 }
 
                 System.out.println("Correctness Test Finished");
-                System.out.println("Average Latency: " + correctness_duration / 100.0 / 2 / i);
+                System.out.println("Average Latency: " + correctness_duration / 10000.0 / 2 / i);
 
                 // Stress each client with with 100 requests of maximum size
                 long stress_duration = 0;
