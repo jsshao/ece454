@@ -36,18 +36,6 @@ public class StorageNode {
         int myNum = Integer.parseInt(args[1]);
         System.out.println("My host and port: " + hosts.get(myNum) + ":" + ports.get(myNum));
 
-        // Launch a Thrift server here
-/*        try {
-            KeyValueService.Processor processor = 
-                new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
-            TServerSocket socket = new TServerSocket(ports.get(myNum));
-            TSimpleServer.Args sargs = new TSimpleServer.Args(socket);
-            sargs.protocolFactory(new TBinaryProtocol.Factory());
-            sargs.transportFactory(new TFramedTransport.Factory());
-            sargs.processorFactory(new TProcessorFactory(processor));
-            TServer server = new TSimpleServer(sargs);
-            server.serve();
-*/
         try {
             KeyValueService.Processor processor = 
                 new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));

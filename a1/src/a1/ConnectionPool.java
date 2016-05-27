@@ -12,7 +12,7 @@ import org.apache.thrift.async.*;
 
 public class ConnectionPool {
     private static int CONNECTION_LIMIT = 2;
-    private static int POLL_FREQUENCY_MS = 100;
+    private static int POLL_FREQUENCY_MS = 1;
     private HashMap<Integer, String> mHosts;
     private HashMap<Integer, Integer> mPorts;
     private HashMap<Integer, ConcurrentLinkedQueue<KeyValueService.AsyncClient>> mPool;

@@ -73,10 +73,11 @@ public class Client {
                         List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
                         // Create random key-value pairs
-                        for (int k = 0; k < 1000; k++) {
+                        for (int k = 0; k < 4; k++) {
                             String key = UUID.randomUUID().toString();
+                            key = key.substring(0, 10);
                             keys.add(key);
-                            byte value[] = new byte[100];
+                            byte value[] = new byte[8];
                             new Random().nextBytes(value);
                             values.add(ByteBuffer.wrap(value));
                         }
