@@ -32,6 +32,7 @@ public class StorageNode {
         int myNum = Integer.parseInt(args[1]);
         System.out.println("My host and port: " + hosts.get(myNum) + ":" + ports.get(myNum));
 
+        /*
         try {
             KeyValueService.Processor processor = 
                 new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
@@ -45,21 +46,23 @@ public class StorageNode {
             sargs.minWorkerThreads(64);
             TServer server = new THsHaServer(sargs);
             server.serve();
+            */
         
-        /*try {
+        try {
             KeyValueService.Processor processor = 
                 new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
             TNonblockingServerTransport trans = new TNonblockingServerSocket(ports.get(myNum));
             TThreadedSelectorServer.Args sargs = new TThreadedSelectorServer.Args(trans);
-            sargs.transportFactory(new TFramedTransport.Factory(1000000));
+            sargs.transportFactory(new TFramedTransport.Factory(201008037));
             sargs.protocolFactory(new TBinaryProtocol.Factory());
             sargs.processor(processor);
             sargs.selectorThreads(4);
-            sargs.workerThreads(16);
+            sargs.workerThreads(32);
             TServer server = new TThreadedSelectorServer(sargs);
-            server.serve();*/
+            server.serve();
         
-        /*try {
+        /*
+        try {
             KeyValueService.Processor processor = 
                 new KeyValueService.Processor(new KeyValueHandler(hosts, ports, myNum));
             TServerSocket socket = new TServerSocket(ports.get(myNum));
@@ -67,10 +70,11 @@ public class StorageNode {
             sargs.protocolFactory(new TBinaryProtocol.Factory());
             sargs.transportFactory(new TFramedTransport.Factory());
             sargs.processorFactory(new TProcessorFactory(processor));
-            sargs.maxWorkerThreads(64);
-            sargs.minWorkerThreads(64);
+            sargs.maxWorkerThreads(16);
+            sargs.minWorkerThreads(16);
             TThreadPoolServer server = new TThreadPoolServer(sargs);
-            server.serve();*/
+            server.serve();
+            */
         } catch (TException x) {
             // How to propagate?
             x.printStackTrace();

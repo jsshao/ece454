@@ -53,7 +53,7 @@ public class Client {
                 
                 for ( int j=0; j<i; j++ ) {
                     TSocket sock = new TSocket(hosts.get(j), ports.get(j));
-                    TTransport transport = new TFramedTransport(sock);
+                    TTransport transport = new TFramedTransport(sock, 201008037);
                     TProtocol protocol = new TBinaryProtocol(transport);
                     KeyValueService.Client c = new KeyValueService.Client(protocol);
                     transport.open();
@@ -109,7 +109,7 @@ public class Client {
                     KeyValueService.Client c = client.get(j);
 
                     // Repeat request 100 times
-                    for (int request = 0; request < 100; request++) {
+                    for (int request = 0; request < 10; request++) {
                         List<String> keys = new ArrayList<String>();
                         List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
@@ -117,7 +117,7 @@ public class Client {
                         for (int k = 0; k < 1000; k++) {
                             String key = new String(new char[999]).replace("\0", "a") + alphabet.charAt(r.nextInt(N));
                             keys.add(key);
-                            byte value[] = new byte[1000];
+                            byte value[] = new byte[100000];
                             new Random().nextBytes(value);
                             values.add(ByteBuffer.wrap(value));
                         }
@@ -128,7 +128,7 @@ public class Client {
                     }
                 }
                 System.out.println("Stress Test Finished");
-                System.out.println("Average Latency: " + stress_duration / 100.0 / i / 2);
+                System.out.println("Average Latency: " + stress_duration / 10.0 / i / 2);
             } catch (IllegalArgument ia) {
                 System.err.println(ia.message);
             } catch (TException x) {
@@ -153,7 +153,7 @@ public class Client {
     }
 
     public void runTests(String [] args) {
-        int NUM_OF_THREADS = 2;
+        int NUM_OF_THREADS = 1;
         for (int i = 0; i < NUM_OF_THREADS; i++) {
             Worker worker = new Worker("", args);
             worker.start();

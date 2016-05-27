@@ -11,7 +11,7 @@ import org.apache.thrift.protocol.*;
 import org.apache.thrift.async.*;
 
 public class ConnectionPool {
-    private static int CONNECTION_LIMIT = 2;
+    private static int CONNECTION_LIMIT = 16;
     private static int POLL_FREQUENCY_MS = 1;
     private HashMap<Integer, String> mHosts;
     private HashMap<Integer, Integer> mPorts;
@@ -43,10 +43,12 @@ public class ConnectionPool {
             } else {
                 //System.out.println("Waiting for connection to be free");
                 while (queue.isEmpty()) {
+                    /*
                     try {
                         Thread.sleep(POLL_FREQUENCY_MS);
                     } catch (InterruptedException x) {
                     }
+                    */
                 }
                 KeyValueService.AsyncClient client = queue.poll();
                 return client;
