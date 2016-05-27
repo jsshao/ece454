@@ -58,7 +58,7 @@ public class Client {
                 KeyValueService.Client c = client.get(j);
 
                 // Repeat request 100 times
-                for (int request = 0; request < 10; request++) {
+                for (int request = 0; request < 100; request++) {
                     List<String> keys = new ArrayList<String>();
                     List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
@@ -85,7 +85,7 @@ public class Client {
             }
 
             System.out.println("Correctness Test Finished");
-            System.out.println("Average Latency: " + correctness_duration / 1000.0 / i);
+            System.out.println("Average Latency: " + correctness_duration / 100.0 / i);
 
             // Stress each client with with 100 requests of maximum size
             long stress_duration = 0;
@@ -93,7 +93,7 @@ public class Client {
                 KeyValueService.Client c = client.get(j);
 
                 // Repeat request 100 times
-                for (int request = 0; request < 10; request++) {
+                for (int request = 0; request < 100; request++) {
                     List<String> keys = new ArrayList<String>();
                     List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
@@ -112,7 +112,7 @@ public class Client {
                 }
             }
             System.out.println("Stress Test Finished");
-            System.out.println("Average Latency: " + stress_duration / 10.0 / i / 2);
+            System.out.println("Average Latency: " + stress_duration / 100.0 / i / 2);
         } catch (IllegalArgument ia) {
             System.err.println(ia.message);
         } catch (TException x) {
