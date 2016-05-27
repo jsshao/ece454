@@ -37,11 +37,11 @@ public class ConnectionPool {
         }
         synchronized(queue) {
             if (queue.isEmpty() && mNumExistingConnections.get(serverId) < CONNECTION_LIMIT) {
-                System.out.println("Creating new connection");
+                //System.out.println("Creating new connection");
                 mNumExistingConnections.put(serverId, mNumExistingConnections.get(serverId) + 1);
                 return createNewClient(serverId);
             } else {
-                System.out.println("Waiting for connection to be free");
+                //System.out.println("Waiting for connection to be free");
                 while (queue.isEmpty()) {
                     try {
                         Thread.sleep(POLL_FREQUENCY_MS);
@@ -57,11 +57,11 @@ public class ConnectionPool {
     public void releaseConnection(Integer serverId, KeyValueService.AsyncClient client) {
         ConcurrentLinkedQueue<KeyValueService.AsyncClient> queue = mPool.get(serverId);
         queue.offer(client);
-        System.out.println("Putting client back into queue");
+        //System.out.println("Putting client back into queue");
     }
 
     private KeyValueService.AsyncClient createNewClient(int serverId) {
-        System.out.println("Creating new client with server " + serverId);
+        //System.out.println("Creating new client with server " + serverId);
         try {
             /*TSocket sock = new TNonblockingSocket(mHosts.get(serverId), mPorts.get(serverId));
             TTransport transport = new TFramedTransport(sock);

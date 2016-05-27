@@ -53,27 +53,27 @@ public class Client {
             Random r = new Random();
 
             // Correctness test for each client 100 times
+            long correctness_duration = 0;
             for (int j = 0; j < i; j++) {
                 KeyValueService.Client c = client.get(j);
-                List<String> keys = new ArrayList<String>();
-                List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
                 // Repeat request 100 times
                 for (int request = 0; request < 10; request++) {
+                    List<String> keys = new ArrayList<String>();
+                    List<ByteBuffer> values = new ArrayList<ByteBuffer>();
+
                     // Create random key-value pairs
                     for (int k = 0; k < 1000; k++) {
                         String key = UUID.randomUUID().toString();
-                        if (keys.contains(key)) {
-                            System.out.println("WTF");
-                            return;
-                        }
                         keys.add(key);
                         byte value[] = new byte[100];
                         new Random().nextBytes(value);
                         values.add(ByteBuffer.wrap(value));
                     }
                     List<ByteBuffer> ret;
+                    long startTime = System.currentTimeMillis();
                     ret = c.multiPut(keys, values);
+                    correctness_duration += System.currentTimeMillis() - startTime;
                     for (ByteBuffer byteBuf: ret) {
                         byte[] arr = new byte[byteBuf.remaining()];
                         byteBuf.get(arr);
@@ -84,14 +84,19 @@ public class Client {
                 }
             }
 
+            System.out.println("Correctness Test Finished");
+            System.out.println("Average Latency: " + correctness_duration / 1000.0 / i);
+
             // Stress each client with with 100 requests of maximum size
+            long stress_duration = 0;
             for (int j = 0; j < i; j++) {
                 KeyValueService.Client c = client.get(j);
-                List<String> keys = new ArrayList<String>();
-                List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
                 // Repeat request 100 times
                 for (int request = 0; request < 10; request++) {
+                    List<String> keys = new ArrayList<String>();
+                    List<ByteBuffer> values = new ArrayList<ByteBuffer>();
+
                     // Create random key-value pairs
                     for (int k = 0; k < 1000; k++) {
                         String key = new String(new char[999]).replace("\0", "a") + alphabet.charAt(r.nextInt(N));
@@ -100,10 +105,14 @@ public class Client {
                         new Random().nextBytes(value);
                         values.add(ByteBuffer.wrap(value));
                     }
+                    long startTime = System.currentTimeMillis();
                     c.multiPut(keys, values);
                     List<ByteBuffer> ret = c.multiGet(keys);
+                    stress_duration += System.currentTimeMillis() - startTime;
                 }
             }
+            System.out.println("Stress Test Finished");
+            System.out.println("Average Latency: " + stress_duration / 10.0 / i / 2);
         } catch (IllegalArgument ia) {
             System.err.println(ia.message);
         } catch (TException x) {
