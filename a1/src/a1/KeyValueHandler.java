@@ -39,7 +39,6 @@ class MultiGetCallback implements AsyncMethodCallback<KeyValueService.AsyncClien
             for (int i=0; i<mIds.size(); i++) {
                 mRetMap.put(mIds.get(i), ret.get(i));
             }
-            
         } catch (TException e) {
             e.printStackTrace();
         }
@@ -78,7 +77,6 @@ class MultiPutCallback implements AsyncMethodCallback<KeyValueService.AsyncClien
             for (int i=0; i<mIds.size(); i++) {
                 mRetMap.put(mIds.get(i), ret.get(i));
             }
-            
         } catch (TException e) {
             e.printStackTrace();
         }
@@ -120,7 +118,7 @@ public class KeyValueHandler implements KeyValueService.Iface {
         List<ByteBuffer> values = new ArrayList<ByteBuffer>(keys.size()); 
         HashMap<Integer, ArrayList<String>> batches = new HashMap<Integer, ArrayList<String>>();
         HashMap<Integer, ArrayList<Integer>> keyIds = new HashMap<Integer, ArrayList<Integer>>();
-        HashMap<Integer, ByteBuffer> retMap = new HashMap<Integer, ByteBuffer>();
+        ConcurrentHashMap<Integer, ByteBuffer> retMap = new ConcurrentHashMap<Integer, ByteBuffer>();
         byte empty[] = {};
 
         for (int i=0; i<keys.size(); i++) {
@@ -158,6 +156,8 @@ public class KeyValueHandler implements KeyValueService.Iface {
 
         for (int i=0; i<keys.size(); i++) {
             values.add(retMap.get(i));
+            if (retMap.get(i) == null)
+                System.out.println(keys.size() + "WTF" + retMap.size());
         }
 
         return values;
@@ -172,7 +172,7 @@ public class KeyValueHandler implements KeyValueService.Iface {
         HashMap<Integer, ArrayList<String>> keyBatches = new HashMap<Integer, ArrayList<String>>();
         HashMap<Integer, ArrayList<ByteBuffer>> valueBatches = new HashMap<Integer, ArrayList<ByteBuffer>>();
         HashMap<Integer, ArrayList<Integer>> keyIds = new HashMap<Integer, ArrayList<Integer>>();
-        HashMap<Integer, ByteBuffer> retMap = new HashMap<Integer, ByteBuffer>();
+        ConcurrentHashMap<Integer, ByteBuffer> retMap = new ConcurrentHashMap<Integer, ByteBuffer>();
         byte empty[] = {};
 
         for (int i=0; i<keys.size(); i++) {
@@ -216,6 +216,8 @@ public class KeyValueHandler implements KeyValueService.Iface {
 
         for (int i=0; i<keys.size(); i++) {
             oldValues.add(retMap.get(i));
+            if (retMap.get(i) == null)
+                System.out.println(keys.size() + "WTF" + retMap.size());
         }
         return oldValues;
     }
