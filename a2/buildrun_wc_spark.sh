@@ -6,23 +6,23 @@ SPARK_HOME=/opt/spark-1.6.1-bin-hadoop2.6
 export CLASSPATH=.:"$SPARK_HOME/lib/*"
 
 echo --- Deleting
-rm SparkWC.jar
-rm ece454/SparkWC*.class
+rm $1.jar
+rm ece454/$1*.class
 
 echo --- Compiling
-$SCALA_HOME/bin/scalac ece454/SparkWC.scala
+$SCALA_HOME/bin/scalac ece454/$1.scala
 if [ $? -ne 0 ]; then
     exit
 fi
 
 echo --- Jarring
-jar -cf SparkWC.jar ece454/SparkWC*.class
+jar -cf $1.jar ece454/$1*.class
 
 echo --- Running
-INPUT=sample_input
+INPUT=sample_input/dataset1.txt
 OUTPUT=output_spark
 
 rm -fr $OUTPUT
-$SPARK_HOME/bin/spark-submit --master "local[*]" --class ece454.SparkWC SparkWC.jar $INPUT $OUTPUT
+$SPARK_HOME/bin/spark-submit --master "local[*]" --class ece454.$1 $1.jar $INPUT $OUTPUT
 
 cat $OUTPUT/*

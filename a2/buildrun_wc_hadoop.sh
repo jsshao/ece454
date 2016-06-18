@@ -6,23 +6,23 @@ export HADOOP_HOME=/opt/hadoop-2.7.2
 export CLASSPATH=`$HADOOP_HOME/bin/hadoop classpath`
 
 echo --- Deleting
-rm HadoopWC.jar
-rm ece454/HadoopWC*.class
+rm $1.jar
+rm ece454/$1*.class
 
 echo --- Compiling
-$JAVA_HOME/bin/javac ece454/HadoopWC.java
+$JAVA_HOME/bin/javac ece454/$1.java
 if [ $? -ne 0 ]; then
     exit
 fi
 
 echo --- Jarring
-jar -cf HadoopWC.jar ece454/HadoopWC*.class
+jar -cf $1.jar ece454/$1*.class
 
 echo --- Running
-INPUT=sample_input
+INPUT=sample_input/dataset1.txt
 OUTPUT=output_hadoop
 
 rm -fr $OUTPUT
-$HADOOP_HOME/bin/hadoop jar HadoopWC.jar ece454.HadoopWC $INPUT $OUTPUT
+$HADOOP_HOME/bin/hadoop jar $1.jar ece454.$1 $INPUT $OUTPUT
 
 cat $OUTPUT/*
