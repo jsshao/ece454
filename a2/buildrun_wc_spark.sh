@@ -19,7 +19,7 @@ echo --- Jarring
 jar -cf $1.jar ece454/$1*.class
 
 echo --- Running
-INPUT=sample_input/dataset1.txt
+INPUT=sample_input
 OUTPUT=output_spark
 
 rm -fr $OUTPUT
