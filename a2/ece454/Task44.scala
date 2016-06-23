@@ -31,28 +31,18 @@ object Task4 {
         "%s,%s,%1.2f".format(a._1, b._1, numerator/(aNorm*bNorm))
     }
 
-    def ratingsToSimilarities(ratings: Array[(String, Array[Double])]) : Array[String] = {
-
-      val buf = scala.collection.mutable.ArrayBuffer.empty[String]
-      for(a <- ratings) {
-        for(b <- ratings) {
-          if(a._1 < b._1) {
-            buf += pairToSimilarity(a, b)
-          }
-        }
-      }
-      buf.toArray
-
-    }
-
     def main(args: Array[String]) {
         val conf = new SparkConf().setAppName("Spark Task4 Application")
         val sc = new SparkContext(conf)
 
         val textFile = sc.textFile(args(0))
-        val ratings = textFile.map(line => lineToRatings(line)).collect()
-        val similarities = ratingsToSimilarities(ratings)
-        sc.makeRDD(similarities).saveAsTextFile(args(1))
 
+        val ratings = textFile.map(line => lineToRatings(line))
+        val moviePair = ratings
+            .cartesian(ratings)
+            .filter(pair => pair._1._1 < pair._2._1)
+        val similarities = moviePair
+            .map(pair => pairToSimilarity(pair._1, pair._2))
+        similarities.saveAsTextFile(args(1))
     }
 }

@@ -3,12 +3,12 @@ package ece454
 import org.apache.spark.{SparkContext, SparkConf}
 
 object Task3 {
-  def highest(line: String): Array[(Int, (Int, Int))] = {
+  def highest(line: String): Array[(Int, Int)] = {
       line.split(",")
         .zipWithIndex
         .drop(1)
         .filter(_._1 != "")
-        .map(pair => (pair._2, (pair._1.toInt, 1)))
+        .map(pair => (pair._2, pair._1.toInt))
   }
 
   def main(args: Array[String]) {
@@ -18,8 +18,8 @@ object Task3 {
     val textFile = sc.textFile(args(0))
 
     textFile.flatMap(line => highest(line))
-        .reduceByKey((a,b) => (a._1+b._1, a._2+b._2))
-        .map(v => ("%s,%1.1f".format(v._1,v._2._1.toDouble/v._2._2)))
+        .groupByKey()
+        .map(v => (v._1, "%1.1f".format(v._2.sum.toDouble/v._2.size)))
         .saveAsTextFile(args(1))
   }
 }

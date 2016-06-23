@@ -64,6 +64,7 @@ public class Task2 {
         Job job = new Job(conf, "Rating Count");
         job.setJarByClass(Task2.class);
         job.setMapperClass(TokenizerMapper.class);
+        job.setCombinerClass(IntSumReducer.class);
         job.setReducerClass(IntSumReducer.class);
         job.setNumReduceTasks(1);
         job.setOutputKeyClass(NullWritable.class);
