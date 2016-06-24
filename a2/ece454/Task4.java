@@ -25,12 +25,13 @@ public class Task4 {
        extends Mapper<Object, Text, NullWritable, MapWritable>{
     
     private MapWritable vectorValues = new MapWritable();
+    private Text movie = new Text();
+    private Text ratings = new Text();
     private static NullWritable nullKey = NullWritable.get();
       
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
     String[] tokens = value.toString().split(",", -1);
-    double[] vector = new double[tokens.length - 1];
 
     long sum = 0L;
     int count = 0;
@@ -51,7 +52,9 @@ public class Task4 {
         }
     }
     sb.setLength(sb.length() - 1);
-    vectorValues.put(new Text(tokens[0]), new Text(sb.toString()));
+    movie.set(tokens[0]);
+    ratings.set(sb.toString());
+    vectorValues.put(movie, ratings);
     context.write(nullKey, vectorValues);
     }
   }
@@ -128,7 +131,7 @@ public class Task4 {
     conf.set("mapred.textoutputformat.separator", ",");
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
     if (otherArgs.length != 2) {
-      System.err.println("Usage: wordcount <in> <out>");
+      System.err.println("Usage: Task 4 <in> <out>");
       System.exit(2);
     }
     Job job = new Job(conf, "Task 4");

@@ -5,7 +5,7 @@ import Math.sqrt
 
 object Task4 {
     def lineToRatings(line: String): (String, Array[Double]) = {
-        val array = line.split(",")
+        val array = line.split(",", -1)
         val movie = array(0)
         val ratings = array.drop(1).map {
             x => if (x != "") (x.toInt) else 0
@@ -53,6 +53,5 @@ object Task4 {
         val ratings = textFile.map(line => lineToRatings(line)).collect()
         val similarities = ratingsToSimilarities(ratings)
         sc.makeRDD(similarities).saveAsTextFile(args(1))
-
     }
 }

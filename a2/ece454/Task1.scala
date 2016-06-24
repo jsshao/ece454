@@ -4,7 +4,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 object Task1 {
   def highest(line: String): String = {
-      val array = line.split(",")
+      val array = line.split(",", -1)
       val max = array.drop(1).foldLeft((-1)) {
         (result, x) => 
           if (x != "" && x.toInt > result) (x.toInt)

@@ -4,7 +4,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 object Task3 {
   def highest(line: String): Array[(Int, (Int, Int))] = {
-      line.split(",")
+      line.split(",", -1)
         .zipWithIndex
         .drop(1)
         .filter(_._1 != "")

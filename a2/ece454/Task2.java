@@ -24,7 +24,7 @@ public class Task2 {
         private IntWritable finalCount = new IntWritable();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            String[] tokens = value.toString().split(",");
+            String[] tokens = value.toString().split(",", -1);
 
             int count = 0;
             for (int i = 1; i < tokens.length; i++) {

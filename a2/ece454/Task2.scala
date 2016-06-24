@@ -4,7 +4,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 object Task2 {
   def lineSum(line: String): (Int, Int) = {
-      val sum = line.split(",").drop(1).foldLeft(0) {
+      val sum = line.split(",", -1).drop(1).foldLeft(0) {
         (acc, x) => 
           if (x != "") (acc+1)
           else acc

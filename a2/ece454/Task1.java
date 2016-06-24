@@ -22,7 +22,7 @@ public class Task1 {
         private Text ratings = new Text();
             
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            String[] tokens = value.toString().split(",");
+            String[] tokens = value.toString().split(",", -1);
             
             int max = 0;
             int rating = 0;
@@ -55,7 +55,7 @@ public class Task1 {
             System.err.println("Usage: Task1 <in> <out>");
             System.exit(2);
         }
-        Job job = new Job(conf, "word count");
+        Job job = new Job(conf, "Task 1");
         job.setJarByClass(Task1.class);
         job.setMapperClass(TokenizerMapper.class);
         job.setNumReduceTasks(0);
