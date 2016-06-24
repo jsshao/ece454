@@ -18,17 +18,20 @@ object Task4 {
         return (movie, userRatings)
     }
 
-    def dotProduct(as: Array[Double], bs: Array[Double]): Double = {
-        (for ((a, b) <- as zip bs) yield a * b) sum
-    }
-
     def pairToSimilarity(a: (String, Array[Double]), b: (String, Array[Double])): String = {
         val aArr = a._2
         val bArr = b._2
-        val numerator = dotProduct(aArr, bArr)
-        val aNorm = sqrt(dotProduct(aArr, aArr))
-        val bNorm = sqrt(dotProduct(bArr, bArr))
-        "%s,%s,%1.2f".format(a._1, b._1, numerator/(aNorm*bNorm))
+        var num = 0.0;
+        var aNorm = 0.0;
+        var bNorm = 0.0;
+        for(i <- 0 until aArr.size) {
+          num += aArr(i)*bArr(i)
+          aNorm += aArr(i)*aArr(i)
+          bNorm += bArr(i)*bArr(i)
+        }
+        aNorm = sqrt(aNorm)
+        bNorm = sqrt(bNorm)
+        "%s,%s,%1.2f".format(a._1, b._1, num/(aNorm*bNorm))
     }
 
     def ratingsToSimilarities(ratings: Array[(String, Array[Double])]) : Array[String] = {
