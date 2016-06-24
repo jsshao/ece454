@@ -22,10 +22,10 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class Task4 {
   public static class TokenizerMapper 
-       extends Mapper<Object, Text, Text, MapWritable>{
+       extends Mapper<Object, Text, NullWritable, MapWritable>{
     
     private MapWritable vectorValues = new MapWritable();
-    private static Text nullValue = new Text("");
+    private static NullWritable nullKey = NullWritable.get();
       
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
@@ -52,15 +52,31 @@ public class Task4 {
     }
     sb.setLength(sb.length() - 1);
     vectorValues.put(new Text(tokens[0]), new Text(sb.toString()));
-    context.write(nullValue, vectorValues);
+    context.write(nullKey, vectorValues);
     }
   }
+
+  public static class PairCombiner 
+      extends Reducer<NullWritable,MapWritable,NullWritable,MapWritable> 
+  {
+    public void reduce(NullWritable key, Iterable<MapWritable> values, 
+                       Context context) throws IOException, 
+                       InterruptedException {
+       
+        MapWritable vectorValues = new MapWritable();
+        for (MapWritable map: values) {
+            vectorValues.putAll(map);
+        } 
+        context.write(key, vectorValues);
+    }
+  }
+
   
   public static class PairReducer 
-       extends Reducer<Text,MapWritable,Text,Text> {
+       extends Reducer<NullWritable,MapWritable,Text,Text> {
     private IntWritable result = new IntWritable();
 
-    public void reduce(Text key, Iterable<MapWritable> values, 
+    public void reduce(NullWritable key, Iterable<MapWritable> values, 
                        Context context
                        ) throws IOException, InterruptedException {
         HashMap<String, List<Double>> all = new HashMap<String, List<Double>>();
@@ -118,10 +134,10 @@ public class Task4 {
     Job job = new Job(conf, "Task 4");
     job.setJarByClass(Task4.class);
     job.setMapperClass(TokenizerMapper.class);
-    //job.setCombinerClass(PairReducer.class);
+    job.setCombinerClass(PairCombiner.class);
     job.setReducerClass(PairReducer.class);
     //job.setNumReduceTasks(1);
-    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputKeyClass(NullWritable.class);
     job.setMapOutputValueClass(MapWritable.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
