@@ -26,6 +26,4 @@ INPUT=input/tiny.txt
 NUMTHREADS=4
 
 rm -fr output
-time $JAVA_HOME/bin/java -Xmx1g -cp myCC.jar ece454.CC $NUMTHREADS $INPUT output
-
-cat output | head -n10
+time $JAVA_HOME/bin/java -Xmx1g -cp myCC.jar ece454.CC $NUMTHREADS $INPUT ans_java

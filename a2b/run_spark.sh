@@ -24,8 +24,8 @@ echo --- Running
 #INPUT=input/small.txt
 INPUT=input/tiny.txt
 
-rm -fr output
+rm -fr output ans_spark
 ulimit -u 100
 time timeout 1h $SPARK_HOME/bin/spark-submit --driver-memory 2g --master "local[1]" --class ece454.SparkCC SparkCC.jar $INPUT output
 
-cat output/part* | head -n10
+cat output/part* > ans_spark
