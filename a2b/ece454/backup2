@@ -3,43 +3,71 @@ package ece454;
 import java.util.*;
 import java.util.concurrent.*;
 import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 
 public class CC {
+    static class Edge {
+    int v1, v2;
+    Edge(int v1, int v2) { this.v1 = v1; this.v2 = v2; }
+    }
+
     public static void main(String[] args) throws Exception {
     int numThreads = Integer.parseInt(args[0]);
     numThreads = 1;
+    int maxVertex = 0;
 
     // read graph from input file
+    Edge[] edges = new Edge[10000000];
+    //int [] vertices = new int[20000000];
     //List<Edge> edges = new ArrayList<>();
-    //Set<Integer> vertices = new HashSet<>();
+    Set<Integer> vertices = new HashSet<>(10000000);
+    File file = new File(args[1]);
+    FileInputStream fis = new FileInputStream(file);
+    FileChannel fc = fis.getChannel();
+    MappedByteBuffer mmb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+    byte[] buffer = new byte[(int)fc.size()];
+    mmb.get(buffer);
+    fis.close();
+    BufferedReader in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buffer)));
+
+    int ind = 0;
+    for (String line = in.readLine(); line != null; line = in.readLine()) {
+        String[] verts = line.split("\\s+");
+        int v1 = Integer.parseInt(verts[0]);
+        int v2 = Integer.parseInt(verts[1]);
+        Edge e = new Edge(v1, v2);
+        maxVertex = Math.max(maxVertex, v2);
+        edges[ind] = e;
+        ind++;
+        //edges.add(e);
+        vertices.add(v1);
+        vertices.add(v2);
+    }
+
+    in.close();
+        /*
     FileInputStream fis = new FileInputStream(args[1]);
     BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+    ArrayList<String> buffer = new ArrayList<String>();
     String line = null;
-    int v1, v2;
-    String[] verts;
-    UnionFind<Integer> u = new UnionFind<Integer>();
     while ((line = br.readLine()) != null) {
-        verts = line.split("\\s+");
-        v1 = Integer.parseInt(verts[0]);
-        v2 = Integer.parseInt(verts[1]);
-        //vertices.add(v1);
-        //vertices.add(v2);
-        u.add(v1);
-        u.add(v2);
-        u.union(v1, v2);
+        buffer.add(line);
+        String[] verts = line.split("\\s+");
+        int v1 = Integer.parseInt(verts[0]);
+        int v2 = Integer.parseInt(verts[1]);
+        Edge e = new Edge(v1, v2);
+        maxVertex = Math.max(maxVertex, v2);
+        edges.add(e);
+        vertices.add(v1);
+        vertices.add(v2);
     }
     br.close();
-    //UnionFind u = new UnionFind(maxVertex + 1);
+    if (1 == 1)
+        return;
 
-    PrintWriter pw = new PrintWriter(new FileWriter(args[2]));
-    u.printAll(pw);
-/*
-    for (int i: vertices) {
-        pw.println(i + " " + u.find(i));
-    }
-*/
-    pw.close();
-/*
     // start worker threads
     Thread[] threads = new Thread[numThreads];
     UnionFind u = new UnionFind(maxVertex + 1);
@@ -59,7 +87,7 @@ public class CC {
         pw.println(i + " " + "<replace with component label>");
     }
     pw.close();
-*/
+        */
     }
 
     static class MyRunnable implements Runnable {
@@ -74,7 +102,6 @@ public class CC {
         }
     }
 
-/*
     static public class UnionFind {
 
       private int[] _parent;
@@ -116,5 +143,4 @@ public class CC {
         }
       }
     }
-*/
 }
