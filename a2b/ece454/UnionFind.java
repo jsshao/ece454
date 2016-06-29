@@ -20,6 +20,7 @@ package ece454;
  */
 
 import java.util.*; // For Map, HashMap
+import java.util.concurrent.*;
 import java.io.*;
 
 /**
@@ -50,7 +51,7 @@ public final class UnionFind<T> {
      * A map from objects in the UnionFind structure to their associated
      * rank and parent.
      */
-    private final Map<T, Link<T>> elems = new HashMap<T, Link<T>>();
+    private final Map<T, Link<T>> elems = new ConcurrentHashMap<T, Link<T>>();
 
     /**
      * Creates a new UnionFind structure that is initially empty.
