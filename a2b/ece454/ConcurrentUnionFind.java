@@ -29,7 +29,7 @@ import java.io.*;
  * @param T The type of elements to store in the structure.
  * @author Keith Schwarz (htiek@cs.stanford.edu)
  */
-public final class UnionFind<T> {
+public final class ConcurrentUnionFind<T> {
     /**
      * A utility struct holding an an object's parent and rank.
      */
@@ -51,12 +51,12 @@ public final class UnionFind<T> {
      * A map from objects in the UnionFind structure to their associated
      * rank and parent.
      */
-    private final Map<T, Link<T>> elems = new HashMap<T, Link<T>>();
+    private final Map<T, Link<T>> elems = new ConcurrentHashMap<T, Link<T>>();
 
     /**
      * Creates a new UnionFind structure that is initially empty.
      */
-    public UnionFind() {
+    public ConcurrentUnionFind() {
         // Handled implicitly
     }
 
@@ -67,7 +67,7 @@ public final class UnionFind<T> {
      *
      * @param elems The elements to store in the UnionFind structure.
      */
-    public UnionFind(Collection<? extends T> elems) {
+    public ConcurrentUnionFind(Collection<? extends T> elems) {
         /* Iterate across the collection, adding each to this structure. */
         for (T elem: elems)
             add(elem);

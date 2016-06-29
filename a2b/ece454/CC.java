@@ -31,7 +31,28 @@ public class CC {
             numThreads = 1;
         }
 
-        UnionFind<Integer> u = new UnionFind<Integer>();
+        if (numThreads == 1) {
+            UnionFind<Integer> u = new UnionFind<Integer>();
+            BufferedReader br = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buffer)));
+            String line = null;
+            int v1, v2;
+            String[] verts;
+            try {
+                while ((line = br.readLine()) != null) {
+                    verts = line.split("\\s+");
+                    v1 = Integer.parseInt(verts[0]);
+                    v2 = Integer.parseInt(verts[1]);
+                    u.add(v1);
+                    u.add(v2);
+                    u.union(v1, v2);
+                }
+                br.close();
+            } catch (Exception e) {
+            }
+            return;
+        }
+
+        ConcurrentUnionFind<Integer> u = new ConcurrentUnionFind<Integer>();
 
         // start worker threads
         int thd_buf_length = buffer.length / numThreads;
@@ -63,12 +84,12 @@ public class CC {
 
     static class MyRunnable implements Runnable {
         private Object lock;
-        private UnionFind union;
+        private ConcurrentUnionFind union;
         private byte[] buffer;
         private int offset;
         private int length;
 
-        public MyRunnable(Object lo, UnionFind u, byte[] b, int o, int l) {
+        public MyRunnable(Object lo, ConcurrentUnionFind u, byte[] b, int o, int l) {
             lock = lo;
             union = u;
             buffer = b; 
