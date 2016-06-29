@@ -12,6 +12,18 @@ with open('ans_spark') as f2:
 
 assert len(d1) == len(d2)
 
+s1 = set(d1.values())
+for k in d1:
+    if k == d1[k]:
+        s1.remove(d1[k])
+assert not s1
+
+s2 = set(d2.values())
+for k in d2:
+    if k == d2[k]:
+        s2.remove(d2[k])
+assert not s2
+
 d12 = {}
 d21 = {}
 for k in d1:
@@ -23,4 +35,6 @@ for k in d1:
         d21[d2[k]] = d1[k]
 
 assert len(d12) == len(d21)
+
+
 print('success')
