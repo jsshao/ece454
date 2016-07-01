@@ -51,7 +51,7 @@ public final class ConcurrentUnionFind<T> {
      * A map from objects in the UnionFind structure to their associated
      * rank and parent.
      */
-    private final Map<T, Link<T>> elems = new ConcurrentHashMap<T, Link<T>>();
+    private final ConcurrentHashMap<T, Link<T>> elems = new ConcurrentHashMap<T, Link<T>>();
 
     /**
      * Creates a new UnionFind structure that is initially empty.
@@ -92,7 +92,7 @@ public final class ConcurrentUnionFind<T> {
             return false;
 
         /* Otherwise add the element as its own parent. */
-        elems.put(elem, new Link<T>(elem));
+        elems.putIfAbsent(elem, new Link<T>(elem));
         return true;
     }
 
