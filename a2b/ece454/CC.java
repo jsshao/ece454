@@ -39,9 +39,22 @@ public class CC {
             String[] verts;
             try {
                 while ((line = br.readLine()) != null) {
-                    verts = line.split("\\s+");
-                    v1 = Integer.parseInt(verts[0]);
-                    v2 = Integer.parseInt(verts[1]);
+                    //verts = line.split("\\s+");
+                    //v1 = Integer.parseInt(verts[0]);
+                    //v2 = Integer.parseInt(verts[1]);
+                    v1 = 0;
+                    v2 = 0;
+                    int i = 0;
+                    for(;; i++)
+                        if('0' <= line.charAt(i) && line.charAt(i) <= '9')
+                            break;
+                    for(; '0'<=line.charAt(i) && line.charAt(i)<='9'; i++)
+                        v1 = v1*10+line.charAt(i)-'0';
+                    for(;; i++)
+                        if('0' <= line.charAt(i) && line.charAt(i) <= '9')
+                            break;
+                    for(; i < line.length() && '0'<=line.charAt(i) && line.charAt(i)<='9'; i++)
+                        v2 = v2*10+line.charAt(i)-'0';
                     u.add(v1);
                     u.add(v2);
                     u.union(v1, v2);
@@ -49,6 +62,9 @@ public class CC {
                 br.close();
             } catch (Exception e) {
             }
+            PrintWriter pw = new PrintWriter(new FileWriter(args[2]));
+            u.printAll(pw);
+            pw.close();
             return;
         }
 
@@ -104,9 +120,22 @@ public class CC {
             String[] verts;
             try {
                 while ((line = br.readLine()) != null) {
-                    verts = line.split("\\s+");
-                    v1 = Integer.parseInt(verts[0]);
-                    v2 = Integer.parseInt(verts[1]);
+                    //verts = line.split("\\s+");
+                    //v1 = Integer.parseInt(verts[0]);
+                    //v2 = Integer.parseInt(verts[1]);
+                    v1 = 0;
+                    v2 = 0;
+                    int i = 0;
+                    for(;; i++)
+                        if('0' <= line.charAt(i) && line.charAt(i) <= '9')
+                            break;
+                    for(; '0'<=line.charAt(i) && line.charAt(i)<='9'; i++)
+                        v1 = v1*10+line.charAt(i)-'0';
+                    for(;; i++)
+                        if('0' <= line.charAt(i) && line.charAt(i) <= '9')
+                            break;
+                    for(; i < line.length() && '0'<=line.charAt(i) && line.charAt(i)<='9'; i++)
+                        v2 = v2*10+line.charAt(i)-'0';
                     union.add(v1);
                     union.add(v2);
                     synchronized(lock) {
